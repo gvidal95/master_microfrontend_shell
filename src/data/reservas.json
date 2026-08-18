@@ -1,0 +1,33 @@
+{
+  "fecha": "2026-08-17",
+  "courtId": 1,
+  "blocks": [
+    {
+      "startTime": "08:00",
+      "endTime": "09:00",
+      "status": "AVAILABLE"
+    },
+    {
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "status": "AVAILABLE"
+    },
+    {
+      "startTime": "10:00",
+      "endTime": "11:00",
+      "status": "RESERVED",
+      "reservationId": 125
+    },
+    {
+      "startTime": "11:00",
+      "endTime": "12:00",
+      "status": "AVAILABLE"
+    },
+    {
+      "startTime": "15:00",
+      "endTime": "16:00",
+      "status": "RESERVED",
+      "reservationId": 126
+    }
+  ]
+}
