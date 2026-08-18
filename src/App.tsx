@@ -101,7 +101,7 @@ function App() {
   const [session, setSession] = useState<AuthContext | null>(() => authService.getStoredSession(users));
 
   const handleLogin = async (email: string, password: string) => {
-    const auth = await authService.login(email, password, users);
+    const auth = await authService.login(email, password);
     if (!auth) return false;
 
     authService.saveSession(auth);

@@ -1,10 +1,38 @@
+import axios from 'axios';
 import type { AuthContext, AuthUser, MockUser } from '../data/auth';
 
 const toAuthUser = ({ password: _password, ...user }: MockUser): AuthUser => user;
 const SESSION_STORAGE_KEY = 'gestion-canchas.auth.session';
 const USERS_STORAGE_KEY = 'gestion-canchas.auth.users';
+const authApi = axios.create({
+  baseURL: '/api',
+});
+
+type ApiUserRole = 'ADMIN' | 'USUARIO_FINAL';
+
+type LoginResponse = {
+  token: string;
+  userId: number;
+  userName: string;
+  userMail: string;
+  userRole: ApiUserRole;
+};
 
 const isUserRole = (role: unknown): role is AuthUser['role'] => role === 'normal' || role === 'administrador';
+
+const toUserRole = (role: ApiUserRole): AuthUser['role'] => (
+  role === 'ADMIN' ? 'administrador' : 'normal'
+);
+
+const isLoginResponse = (value: unknown): value is LoginResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const response = value as Partial<LoginResponse>;
+  return typeof response.token === 'string'
+    && typeof response.userId === 'number'
+    && typeof response.userName === 'string'
+    && typeof response.userMail === 'string'
+    && (response.userRole === 'ADMIN' || response.userRole === 'USUARIO_FINAL');
+};
 
 const isMockUser = (value: unknown): value is MockUser => {
   if (!value || typeof value !== 'object') return false;
@@ -79,18 +107,28 @@ export const authService = {
     }
   },
 
-  async login(email: string, password: string, users: MockUser[]): Promise<AuthContext | null> {
-    // TODO: Sustituir esta búsqueda por POST /auth/login cuando el backend esté disponible.
-    const user = users.find(
-      (candidate) => candidate.email === email.toLowerCase() && candidate.password === password,
-    );
+  async login(email: string, password: string): Promise<AuthContext | null> {
+    try {
+      const { data } = await authApi.post<unknown>('/auth/login', {
+        userMail: email,
+        userPassword: password,
+      });
 
-    if (!user) return null;
+      if (!isLoginResponse(data)) return null;
 
-    return {
-      token: `mock-jwt.${user.id}.${Date.now()}`,
-      user: toAuthUser(user),
-    };
+      return {
+        token: data.token,
+        user: {
+          id: String(data.userId),
+          name: data.userName,
+          email: data.userMail,
+          role: toUserRole(data.userRole),
+        },
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) return null;
+      throw error;
+    }
   },
 
   async getCurrentUser(token: string, users: MockUser[]): Promise<AuthUser | null> {
