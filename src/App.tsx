@@ -98,7 +98,7 @@ function AppLayout({ auth, onLogout }: { auth: AuthContext; onLogout: () => void
 
 function App() {
   const [users, setUsers] = useState<MockUser[]>(() => authService.getStoredUsers(initialMockUsers));
-  const [session, setSession] = useState<AuthContext | null>(() => authService.getStoredSession(users));
+  const [session, setSession] = useState<AuthContext | null>(() => authService.getStoredSession());
 
   const handleLogin = async (email: string, password: string) => {
     const auth = await authService.login(email, password);

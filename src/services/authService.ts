@@ -82,17 +82,9 @@ export const authService = {
     writeStorage(USERS_STORAGE_KEY, users);
   },
 
-  getStoredSession(users: MockUser[]): AuthContext | null {
+  getStoredSession(): AuthContext | null {
     const session = readStorage(SESSION_STORAGE_KEY, isAuthContext);
-    if (!session) return null;
-
-    const user = users.find((candidate) => candidate.id === session.user.id);
-    if (!user || user.role !== session.user.role) {
-      this.clearSession();
-      return null;
-    }
-
-    return { token: session.token, user: toAuthUser(user) };
+    return session;
   },
 
   saveSession(session: AuthContext) {
@@ -129,13 +121,6 @@ export const authService = {
       if (axios.isAxiosError(error)) return null;
       throw error;
     }
-  },
-
-  async getCurrentUser(token: string, users: MockUser[]): Promise<AuthUser | null> {
-    //TODO: Sustituir por GET /auth/me con Authorization: Bearer ${token}.
-    const [, userId] = token.split('.');
-    const user = users.find((candidate) => candidate.id === userId);
-    return user ? toAuthUser(user) : null;
   },
 
   createSession(user: MockUser): AuthContext {

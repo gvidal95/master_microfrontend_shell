@@ -66,7 +66,6 @@ export function LoginPage({ users, onLogin, onRegister }: LoginPageProps) {
               {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </Button>
           </Box>
-          {mode === 'login' && <Alert severity="info" sx={{ mt: 3 }}>Pruebas: usuario@demo.com / 123456 · admin@demo.com / 123456</Alert>}
         </CardContent>
       </Card>
     </Box>
