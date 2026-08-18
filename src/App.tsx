@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
@@ -17,7 +17,7 @@ type Microfrontend = 'reservas' | 'administracion' |
   'reportes';
 
 const navigationItems: Array<{ id: Microfrontend; label: string; icon: ReactNode; allowedRoles: UserRole[] }> = [
-  { id: 'reservas', label: 'Reservas', icon: <CalendarMonthOutlinedIcon />, allowedRoles: ['normal', 'administrador'] },
+  { id: 'reservas', label: 'Reservas', icon: <CalendarMonthOutlinedIcon />, allowedRoles: ['normal'] },
   { id: 'administracion', label: 'Administración', icon: <SettingsOutlinedIcon />, allowedRoles: ['administrador'] },
   { id: 'reportes', label: 'Reportes', icon: <AssessmentOutlinedIcon />, allowedRoles: ['administrador'] },
 ];
@@ -56,8 +56,14 @@ function MicrofrontendContent({ activeModule, auth }: { activeModule: Microfront
 
 function AppLayout({ auth, onLogout }: { auth: AuthContext; onLogout: () => void }) {
   const allowedItems = useMemo(() => navigationItems.filter((item) => item.allowedRoles.includes(auth.user.role)), [auth.user.role]);
-  const [activeModule, setActiveModule] = useState<Microfrontend>('reservas');
+  const [activeModule, setActiveModule] = useState<Microfrontend>(() => allowedItems[0].id);
   const activeItem = allowedItems.find((item) => item.id === activeModule) ?? allowedItems[0];
+
+  useEffect(() => {
+    if (!allowedItems.some((item) => item.id === activeModule)) {
+      setActiveModule(allowedItems[0].id);
+    }
+  }, [activeModule, allowedItems]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.100', color: 'black' }}>
@@ -91,24 +97,34 @@ function AppLayout({ auth, onLogout }: { auth: AuthContext; onLogout: () => void
 }
 
 function App() {
-  const [users, setUsers] = useState<MockUser[]>(initialMockUsers);
-  const [session, setSession] = useState<AuthContext | null>(null);
+  const [users, setUsers] = useState<MockUser[]>(() => authService.getStoredUsers(initialMockUsers));
+  const [session, setSession] = useState<AuthContext | null>(() => authService.getStoredSession(users));
 
   const handleLogin = async (email: string, password: string) => {
     const auth = await authService.login(email, password, users);
     if (!auth) return false;
 
+    authService.saveSession(auth);
     setSession(auth);
     return true;
   };
 
   const handleRegister = (newUser: MockUser) => {
-    setUsers((currentUsers) => [...currentUsers, newUser]);
-    setSession(authService.createSession(newUser));
+    const updatedUsers = [...users, newUser];
+    const auth = authService.createSession(newUser);
+    authService.saveUsers(updatedUsers);
+    authService.saveSession(auth);
+    setUsers(updatedUsers);
+    setSession(auth);
+  };
+
+  const handleLogout = () => {
+    authService.clearSession();
+    setSession(null);
   };
 
   if (!session) return <LoginPage users={users} onLogin={handleLogin} onRegister={handleRegister} />;
-  return <AppLayout auth={session} onLogout={() => setSession(null)} />;
+  return <AppLayout auth={session} onLogout={handleLogout} />;
 }
 
 export default App;
