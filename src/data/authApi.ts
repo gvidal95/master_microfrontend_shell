@@ -12,3 +12,13 @@ const authLoginResponse = {
     "userMail": "gabriel@email.com",
     "userRole": "USUARIO_FINAL"
 }
+
+// http://localhost:8080/api/auth/register
+
+const authRegisterRequest = {
+    "userName": "admin",
+    "userMail": "admin@email.com",
+    "userPassword": "123456",
+    "userRole": "USUARIO_FINAL"
+}
+

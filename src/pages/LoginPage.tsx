@@ -1,27 +1,27 @@
 import { useState, type FormEvent } from 'react';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import { Alert, Box, Button, Card, CardContent, Tab, Tabs, TextField, Typography } from '@mui/material';
-import type { MockUser } from '../data/auth';
-// import type { MockUser } from './auth';
+import { Alert, Box, Button, Card, CardContent, FormControl, InputLabel, MenuItem, Select, Tab, Tabs, TextField, Typography } from '@mui/material';
 
 type AuthMode = 'login' | 'register';
+type RegisterRole = 'ADMIN' | 'USUARIO_FINAL';
 
 type LoginPageProps = {
-  users: MockUser[];
   onLogin: (email: string, password: string) => Promise<boolean>;
-  onRegister: (user: MockUser) => void;
+  onRegister: (name: string, email: string, password: string, role: RegisterRole) => Promise<{ success: boolean; message: string }>;
 };
 
-export function LoginPage({ users, onLogin, onRegister }: LoginPageProps) {
+export function LoginPage({ onLogin, onRegister }: LoginPageProps) {
   const [mode, setMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<RegisterRole>('USUARIO_FINAL');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const resetForm = () => {
-    setName(''); setEmail(''); setPassword(''); setError('');
+    setName(''); setEmail(''); setPassword(''); setRole('USUARIO_FINAL'); setError(''); setMessage('');
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -41,11 +41,18 @@ export function LoginPage({ users, onLogin, onRegister }: LoginPageProps) {
       setError('Completa todos los campos para crear tu cuenta.');
       return;
     }
-    if (users.some((candidate) => candidate.email === normalizedEmail)) {
-      setError('Ya existe una cuenta registrada con este correo.');
+    const result = await onRegister(name.trim(), normalizedEmail, password, role);
+    if (!result.success) {
+      setError(result.message);
       return;
     }
-    onRegister({ id: `mock-user-${Date.now()}`, name: name.trim(), email: normalizedEmail, password, role: 'normal' });
+
+    setName('');
+    setEmail('');
+    setPassword('');
+    setRole('USUARIO_FINAL');
+    setMode('login');
+    setMessage(result.message);
   };
 
   return (
@@ -61,7 +68,22 @@ export function LoginPage({ users, onLogin, onRegister }: LoginPageProps) {
             {mode === 'register' && <TextField autoComplete="name" fullWidth label="Nombre completo" margin="normal" onChange={(event) => setName(event.target.value)} required value={name} />}
             <TextField autoComplete="email" fullWidth label="Correo electrónico" margin="normal" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
             <TextField autoComplete={mode === 'login' ? 'current-password' : 'new-password'} fullWidth label="Contraseña" margin="normal" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
+            {mode === 'register' && (
+              <FormControl fullWidth margin="normal" required>
+                <InputLabel id="register-role-label">Rol de usuario</InputLabel>
+                <Select
+                  label="Rol de usuario"
+                  labelId="register-role-label"
+                  onChange={(event) => setRole(event.target.value as RegisterRole)}
+                  value={role}
+                >
+                  <MenuItem value="USUARIO_FINAL">Cliente</MenuItem>
+                  <MenuItem value="ADMIN">Administrador</MenuItem>
+                </Select>
+              </FormControl>
+            )}
             {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+            {message && <Alert severity="success" sx={{ mt: 2 }}>{message}</Alert>}
             <Button fullWidth startIcon={mode === 'login' ? <LoginOutlinedIcon /> : <PersonAddOutlinedIcon />} sx={{ mt: 3 }} type="submit" variant="contained">
               {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </Button>

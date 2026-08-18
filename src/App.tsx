@@ -4,7 +4,7 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { AppBar, Box, Button, CircularProgress, CssBaseline, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
-import { initialMockUsers, type AuthContext, type MockUser, type UserRole } from './data/auth';
+import { type AuthContext, type UserRole } from './data/auth';
 import { LoginPage } from './pages/LoginPage';
 import { authService } from './services/authService';
 
@@ -97,7 +97,6 @@ function AppLayout({ auth, onLogout }: { auth: AuthContext; onLogout: () => void
 }
 
 function App() {
-  const [users, setUsers] = useState<MockUser[]>(() => authService.getStoredUsers(initialMockUsers));
   const [session, setSession] = useState<AuthContext | null>(() => authService.getStoredSession());
 
   const handleLogin = async (email: string, password: string) => {
@@ -109,21 +108,16 @@ function App() {
     return true;
   };
 
-  const handleRegister = (newUser: MockUser) => {
-    const updatedUsers = [...users, newUser];
-    const auth = authService.createSession(newUser);
-    authService.saveUsers(updatedUsers);
-    authService.saveSession(auth);
-    setUsers(updatedUsers);
-    setSession(auth);
-  };
+  const handleRegister = (name: string, email: string, password: string, role: 'ADMIN' | 'USUARIO_FINAL') => (
+    authService.register(name, email, password, role)
+  );
 
   const handleLogout = () => {
     authService.clearSession();
     setSession(null);
   };
 
-  if (!session) return <LoginPage users={users} onLogin={handleLogin} onRegister={handleRegister} />;
+  if (!session) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />;
   return <AppLayout auth={session} onLogout={handleLogout} />;
 }
 

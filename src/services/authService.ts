@@ -18,6 +18,11 @@ type LoginResponse = {
   userRole: ApiUserRole;
 };
 
+type RegisterResult = {
+  success: boolean;
+  message: string;
+};
+
 const isUserRole = (role: unknown): role is AuthUser['role'] => role === 'normal' || role === 'administrador';
 
 const toUserRole = (role: ApiUserRole): AuthUser['role'] => (
@@ -32,6 +37,14 @@ const isLoginResponse = (value: unknown): value is LoginResponse => {
     && typeof response.userName === 'string'
     && typeof response.userMail === 'string'
     && (response.userRole === 'ADMIN' || response.userRole === 'USUARIO_FINAL');
+};
+
+const getResponseMessage = (value: unknown, fallback: string): string => {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (value && typeof value === 'object' && 'message' in value && typeof value.message === 'string') {
+    return value.message;
+  }
+  return fallback;
 };
 
 const isMockUser = (value: unknown): value is MockUser => {
@@ -119,6 +132,30 @@ export const authService = {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) return null;
+      throw error;
+    }
+  },
+
+  async register(name: string, email: string, password: string, role: ApiUserRole): Promise<RegisterResult> {
+    try {
+      const { data } = await authApi.post<unknown>('/auth/register', {
+        userName: name,
+        userMail: email,
+        userPassword: password,
+        userRole: role,
+      });
+
+      return {
+        success: true,
+        message: getResponseMessage(data, 'Usuario registrado correctamente.'),
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          message: getResponseMessage(error.response?.data, 'No fue posible registrar el usuario.'),
+        };
+      }
       throw error;
     }
   },
