@@ -5,7 +5,7 @@ const toAuthUser = ({ password: _password, ...user }: MockUser): AuthUser => use
 const SESSION_STORAGE_KEY = 'gestion-canchas.auth.session';
 const USERS_STORAGE_KEY = 'gestion-canchas.auth.users';
 const authApi = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:8082/users/api',
 });
 
 type ApiUserRole = 'ADMIN' | 'USUARIO_FINAL';
